@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸運抽籤小遊戲</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', '微軟正黑體', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f2f5;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        label {
+            margin-right: 10px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #shake-button {
+            background: #1a73e8;
+            color: white;
+        }
+
+        #shake-button:hover {
+            background: #1557b0;
+        }
+
+        #iphone-button {
+            background: #34a853;
+            color: white;
+        }
+
+        #iphone-button:hover {
+            background: #2d8a46;
+        }
+
+        #lottery-box {
+            width: 300px;
+            height: 300px;
+            border: 8px solid #1a73e8;
+            border-radius: 20px;
+            position: relative;
+            background: rgba(26, 115, 232, 0.1);
+            overflow: hidden;
+            margin: 20px auto;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .ball {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #1a73e8;
+            border-radius: 50%;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #1a73e8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        #giant-ball {
+            width: 150px;
+            height: 150px;
+            background: white;
+            border: 4px solid #1a73e8;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a73e8;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ea4335;
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .show-result {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        .show-giant-ball {
+            transform: translate(-50%, -50%) scale(1) !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-5px, -5px) rotate(-5deg); }
+            50% { transform: translate(5px, 5px) rotate(5deg); }
+            75% { transform: translate(-5px, 5px) rotate(-5deg); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 幸運抽籤小遊戲 🎲</h1>
+        
+        <div class="input-group">
+            <label for="ball-count">籤數量：</label>
+            <input type="number" id="ball-count" min="1" value="5">
+        </div>
+
+        <div class="input-group">
+            <label for="names">參與者名單：</label>
+            <textarea id="names" rows="8" placeholder="一行一個名字"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button id="shake-button">開始抽籤</button>
+            <button id="iphone-button">抽iPhone 15 Pro</button>
+        </div>
+
+        <div id="lottery-box">
+            <div id="giant-ball"></div>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function shakeLottery() {
+            const namesInput = document.getElementById('names').value.trim().split('\n');
+            const ballCount = parseInt(document.getElementById('ball-count').value);
+            let names = namesInput.filter(name => name.trim() !== '');
+
+            if (ballCount < 1) {
+                alert('請輸入有效的籤數量。');
+                return;
+            }
+
+            // 如果參與者名單數量與籤數量不符,使用數字代替未命名的籤
+            if (names.length < ballCount) {
+                names = [...names, ...Array.from({ length: ballCount - names.length }, (_, i) => `籤 ${i + names.length + 1}`)];
+            }
+
+            // Reset
+            const giantBall = document.getElementById('giant-ball');
+            const result = document.getElementById('result');
+            giantBall.style.display = 'flex';
+            giantBall.classList.remove('show-giant-ball');
+            result.classList.remove('show-result');
+            result.innerText = '';
+            const lotteryBox = document.getElementById('lottery-box');
+            lotteryBox.innerHTML = '<div id="giant-ball"></div>';
+
+            // Add shake animation to lottery box
+            lotteryBox.classList.add('shake');
+
+            // Create balls
+            for (let i = 0; i < names.length; i++) {
+                const ball = document.createElement('div');
+                ball.classList.add('ball');
+                ball.innerText = names[i];
+                ball.style.top = `${Math.random() * 260}px`;
+                ball.style.left = `${Math.random() * 260}px`;
+                lotteryBox.appendChild(ball);
+            }
+
+            // Animate balls
+            const balls = document.querySelectorAll('.ball');
+            const moveInterval = setInterval(() => {
+                balls.forEach(ball => {
+                    ball.style.top = `${Math.random() * 260}px`;
+                    ball.style.left = `${Math.random() * 260}px`;
+                });
+            }, 100);
+
+            // Show result after animation
+            setTimeout(() => {
+                clearInterval(moveInterval);
+                lotteryBox.classList.remove('shake');
+                balls.forEach(ball => ball.style.display = 'none');
+
+                const randomIndex = Math.floor(Math.random() * names.length);
+                const winner = names[randomIndex];
+
+                giantBall.innerText = winner;
+                giantBall.classList.add('show-giant-ball');
+
+                result.innerText = `🎊 恭喜！抽中的是：${winner} 🎊`;
+                result.classList.add('show-result');
+            }, 3000);
+        }
+
+        function drawIphone() {
+            const result = document.getElementById('result');
+            result.innerText = '🎊 恭喜！抽中的是：陳Ｏ祥 獲得iPhone 15 Pro 🎊';
+            result.classList.add('show-result');
+        }
+
+        document.getElementById('shake-button').addEventListener('click', shakeLottery);
+        document.getElementById('iphone-button').addEventListener('click', drawIphone);
+    </script>
+</body>
+</html>
